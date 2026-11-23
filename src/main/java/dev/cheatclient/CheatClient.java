@@ -39,7 +39,26 @@ public class CheatClient implements ClientModInitializer {
 
 	static void say(String text) {
 		var mc = Minecraft.getInstance();
-		if (mc.player != null) mc.gui.getChat().addMessage(Component.literal("§b[Cheat] §f" + text));
+		if (mc.player == null) return;
+		Component msg = Component.literal("§b[Cheat] §f" + text);
+		// Chat-API hat sich in 26.2 geaendert -> Methode zur Laufzeit suchen, kompiliert immer
+		try {
+			for (var m : mc.player.getClass().getMethods()) {
+				if (m.getName().equals("sendSystemMessage") && m.getParameterCount() == 1
+					&& m.getParameterTypes()[0].isAssignableFrom(Component.class)) { m.invoke(mc.player, msg); return; }
+			}
+			for (var gm : mc.gui.getClass().getMethods()) {
+				if (gm.getParameterCount() != 0) continue;
+				for (var cm : gm.getReturnType().getMethods()) {
+					if (cm.getName().equals("addMessage") && cm.getParameterCount() == 1
+						&& cm.getParameterTypes()[0].isAssignableFrom(Component.class)) {
+						Object chat = gm.invoke(mc.gui);
+						if (chat != null) { cm.invoke(chat, msg); return; }
+					}
+				}
+			}
+		} catch (Throwable ignored) {}
+		System.out.println("[Cheat] " + text);
 	}
 
 	private static void tick(Minecraft mc) {
