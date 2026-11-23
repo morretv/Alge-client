@@ -1,0 +1,42 @@
+name: Build
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: JDK 25 installieren
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '25'
+
+      - name: Gradle einrichten
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '9.5.1'
+
+      - name: Bauen
+        run: gradle build --no-daemon --stacktrace
+
+      - name: Jar als Artefakt hochladen
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cheatclient-jar
+          path: build/libs/*.jar
+          if-no-files-found: warn
+
+      - name: Build-Log hochladen (bei Fehler)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-log
+          path: build/reports/
