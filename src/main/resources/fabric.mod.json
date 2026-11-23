@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "id": "cheatclient",
+  "version": "${version}",
+  "name": "Cheat Client (eigenstaendig)",
+  "description": "Eigenstaendiger Cheat-Client mit Punkt-Befehlen und eigenem Menue.",
+  "authors": ["you"],
+  "environment": "client",
+  "entrypoints": { "client": ["dev.cheatclient.CheatClient"] },
+  "mixins": [{ "config": "cheatclient.mixins.json", "environment": "client" }],
+  "depends": {
+    "fabricloader": ">=0.19.3",
+    "minecraft": "~26.2",
+    "java": ">=25",
+    "fabric-api": "*"
+  }
+}

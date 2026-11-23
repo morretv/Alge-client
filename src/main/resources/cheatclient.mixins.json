@@ -1,0 +1,7 @@
+{
+  "required": true,
+  "package": "dev.cheatclient.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "client": ["XrayMixin", "VelocityMixin"],
+  "injectors": { "defaultRequire": 0 }
+}
