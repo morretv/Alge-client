@@ -92,3 +92,20 @@ Wieder alles eigener Code.
 Alle drei sind mit try/catch bzw. `require = 0` abgesichert, damit ein
 Mapping-Unterschied nicht gleich den ganzen Build/das ganze Spiel zerschiesst -
 im schlimmsten Fall tut nur das eine Modul nichts.
+
+## Automatischer Build über GitHub Actions
+Im Repo liegt jetzt `.github/workflows/build.yml`. Sobald du pushst (oder
+"Run workflow" im Actions-Tab klickst), baut GitHub automatisch:
+
+1. GitHub-Repo -> Tab **Actions** -> den Lauf "Build" anklicken.
+2. Unten auf der Lauf-Seite erscheint **Artifacts** -> `cheatclient-jar`
+   zum Download (eine .zip mit der fertigen .jar drin).
+3. Schlaegt der Build fehl, gibt es stattdessen ein Artefakt `build-log` mit
+   den Fehlerberichten - und der rote "Build"-Schritt im Log zeigt die
+   Java-Fehlermeldung direkt an. Schick mir einfach den Ausschnitt.
+
+Das ersetzt nicht das lokale Bauen, ist aber der einfachste Weg, wenn du
+kein JDK/Gradle lokal installieren willst - und es gibt dir zum ersten Mal
+eine echte Compiler-Fehlermeldung, falls an den als "ungetestet" markierten
+Stellen (EspRenderer, VelocityMixin, StorageEsp, BaseFinder, Xray-Mixin)
+etwas an die 26.2-Mappings angepasst werden muss.

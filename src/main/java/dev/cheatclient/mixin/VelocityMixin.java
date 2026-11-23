@@ -5,35 +5,21 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.LivingEntity;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.ModifyVariable;
 
 /**
- * Verringert/entfernt den Rueckstoss, den der lokale Spieler erleidet.
- * Untested: Die Methode heisst in neueren Mojang-Mappings ueblicherweise
- * {@code LivingEntity.knockback(double, double, double)} - require = 0
- * sorgt dafuer, dass das Spiel trotzdem startet, falls sich das in 26.2
- * geaendert hat; velocity bleibt dann einfach ohne Wirkung.
+ * Skaliert den Rueckstoss des lokalen Spielers. Statt knockback() erneut aufzurufen
+ * (die Signatur hat sich geaendert), wird nur das erste double-Argument (die Staerke)
+ * veraendert - das funktioniert fuer alle knockback-Ueberladungen gleichzeitig.
+ * Wert 0 = kein Rueckstoss, 1 = normal.
  */
 @Mixin(LivingEntity.class)
 public class VelocityMixin {
-	private static boolean cheat$reentry = false;
-
-	@Inject(method = "knockback", at = @At("HEAD"), cancellable = true, require = 0)
-	private void cheat$velocity(double strength, double x, double z, CallbackInfo ci) {
-		if (cheat$reentry) return;
-		if (!Modules.VELOCITY.enabled) return;
-		if ((Object) this != Minecraft.getInstance().player) return;
-
-		ci.cancel();
+	@ModifyVariable(method = "knockback", at = @At("HEAD"), argsOnly = true, ordinal = 0, require = 0)
+	private double cheat$velocity(double strength) {
+		if (!Modules.VELOCITY.enabled) return strength;
+		if ((Object) this != Minecraft.getInstance().player) return strength;
 		double mult = Math.max(0, Math.min(1, Modules.VELOCITY.value));
-		if (mult <= 0) return; // komplett abgefangen
-
-		cheat$reentry = true;
-		try {
-			((LivingEntity) (Object) this).knockback(strength * mult, x, z);
-		} finally {
-			cheat$reentry = false;
-		}
+		return strength * mult;
 	}
 }

@@ -39,7 +39,7 @@ public class CheatClient implements ClientModInitializer {
 
 	static void say(String text) {
 		var mc = Minecraft.getInstance();
-		if (mc.player != null) mc.player.displayClientMessage(Component.literal("§b[Cheat] §f" + text), false);
+		if (mc.player != null) mc.gui.getChat().addMessage(Component.literal("§b[Cheat] §f" + text));
 	}
 
 	private static void tick(Minecraft mc) {

@@ -223,7 +223,7 @@ public final class Modules {
 			long now = System.currentTimeMillis();
 			if (now - lastRun < (long) value) return;
 			lastRun = now;
-			String name = p.getGameProfile().getName();
+			String name = p.getGameProfile().name();
 			for (String template : commands) {
 				String cmd = template.replace("{player}", name).replace("{balance}", lastBalance);
 				if (cmd.startsWith("/")) cmd = cmd.substring(1);
@@ -377,7 +377,13 @@ public final class Modules {
 		@Override public void onEnable() { reload(); }
 		@Override public void onDisable() { reload(); }
 		public void reload() {
-			try { Minecraft.getInstance().levelRenderer.allChanged(); } catch (Throwable ignored) {}
+			try {
+				Object lr = Minecraft.getInstance().levelRenderer;
+				// Methodenname hat sich zwischen Versionen geaendert -> per Reflection suchen
+				for (var meth : lr.getClass().getMethods()) {
+					if (meth.getParameterCount() == 0 && meth.getName().equals("allChanged")) { meth.invoke(lr); break; }
+				}
+			} catch (Throwable ignored) {}
 		}
 		public boolean matches(BlockState s) {
 			String id = s.getBlock().getDescriptionId();
