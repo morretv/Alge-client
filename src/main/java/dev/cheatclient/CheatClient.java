@@ -15,6 +15,8 @@ public class CheatClient implements ClientModInitializer {
 	/** Auf Servern erst nach ".server on" aktiv (pro Verbindung). */
 	static boolean unlocked = false;
 	private static boolean warned = false;
+	/** Gespeicherte Wegpunkte (nur fuer diese Spielsitzung). */
+	private static final java.util.Map<String, double[]> WAYPOINTS = new java.util.LinkedHashMap<>();
 	private static boolean openMenu = false;
 
 	@Override
@@ -95,6 +97,41 @@ public class CheatClient implements ClientModInitializer {
 			case "", "help" -> { help(); return; }
 			case "list", "modules" -> { list(); return; }
 			case "menu", "gui" -> { openMenu = true; return; }
+			case "panic" -> {
+				for (Hack h : Modules.ALL) h.setEnabled(false);
+				say("§cAlle Module aus.");
+				return;
+			}
+			case "pos", "coords" -> {
+				say(String.format(Locale.ROOT, "Position: %.1f %.1f %.1f", mc.player.getX(), mc.player.getY(), mc.player.getZ()));
+				return;
+			}
+			case "wp", "waypoint" -> {
+				if (a.length >= 2 && a[1].equalsIgnoreCase("list")) {
+					if (WAYPOINTS.isEmpty()) say("Keine Wegpunkte.");
+					WAYPOINTS.forEach((k, v) -> say(String.format(Locale.ROOT, " %s: %.0f %.0f %.0f", k, v[0], v[1], v[2])));
+					return;
+				}
+				if (a.length >= 3 && a[1].equalsIgnoreCase("add")) {
+					WAYPOINTS.put(a[2], new double[]{mc.player.getX(), mc.player.getY(), mc.player.getZ()});
+					say("Wegpunkt gespeichert: " + a[2]);
+					return;
+				}
+				if (a.length >= 3 && a[1].equalsIgnoreCase("del")) {
+					say(WAYPOINTS.remove(a[2]) != null ? "Geloescht: " + a[2] : "Unbekannt: " + a[2]);
+					return;
+				}
+				if (a.length >= 3 && a[1].equalsIgnoreCase("goto")) {
+					double[] w = WAYPOINTS.get(a[2]);
+					if (w == null) { say("Unbekannt: " + a[2]); return; }
+					if (!allowed(mc)) { say("Auf Servern erst mit .server on freischalten."); return; }
+					Modules.GOTO.setTarget(w[0], w[1], w[2]);
+					say("Laufe zu " + a[2]);
+					return;
+				}
+				say("Nutzung: .wp add <name> | .wp del <name> | .wp goto <name> | .wp list");
+				return;
+			}
 			case "server" -> {
 				if (isSingleplayer(mc)) { say("Singleplayer: ist immer freigeschaltet."); return; }
 				boolean on = a.length < 2 || !a[1].equalsIgnoreCase("off");
@@ -127,6 +164,13 @@ public class CheatClient implements ClientModInitializer {
 
 		switch (name) {
 			case "gm" -> { gm(mc, a); return; }
+			case "day", "night", "clear" -> {
+				if (!isSingleplayer(mc)) { say("." + name + " geht nur im Singleplayer."); return; }
+				String sv = name.equals("day") ? "time set day" : name.equals("night") ? "time set night" : "weather clear";
+				if (mc.player.connection != null) mc.player.connection.sendCommand(sv);
+				say(name + " (Cheats muessen in der Welt an sein).");
+				return;
+			}
 			case "goto" -> {
 				if (a.length >= 2 && a[1].equalsIgnoreCase("off")) { Modules.GOTO.setEnabled(false); say("Goto gestoppt."); return; }
 				if (a.length < 4) { say("Nutzung: .goto <x> <y> <z>  oder  .goto off"); return; }
@@ -216,11 +260,12 @@ public class CheatClient implements ClientModInitializer {
 	private static void help() {
 		say(".menu = Menue  |  .<modul> [on|off|zahl]  .list  .server on|off");
 		say(".target mobs|players|all  .aimspeed <grad/tick>");
-		say("Nur Singleplayer: .gm <modus>  .heal");
+		say("Nur Singleplayer: .gm <modus>  .heal  .day  .night  .clear");
+		say("Immer: .panic (alles aus)  .pos  .wp add|del|goto|list <name>");
 		say("Xray: .xray add|remove <text>  .xray list  (Alias .esp)");
 		say("Autocmd: .autocmd add <befehl>  .autocmd remove <nr>  .autocmd list  .autocmd <cooldown_ms>");
-		say("Goto: .goto <x> <y> <z>  .goto off   |  Esp/Tracers/Scaffold: .esp .tracers .scaffold [on|off|zahl]");
-		say("PvP/Finder: .velocity .criticals .storageesp .basefinder [on|off|zahl]");
+		say("Goto: .goto <x> <y> <z>  .goto off   |  Esp/Scaffold: .esp .scaffold [on|off|zahl]");
+		say("Combat: .velocity .criticals  |  Neu: .glide .highjump .spider .jesus .airjump .bhop .itemesp .autojump .longjump .parkour .fastladder .autowalk .safewalk .antivoid .hover .fastfall .triggerbot .autoeat .antiafk .spin .autorespawn [on|off|zahl]");
 	}
 
 	private static void list() {

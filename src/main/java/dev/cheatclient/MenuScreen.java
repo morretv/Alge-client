@@ -19,12 +19,12 @@ public class MenuScreen extends Screen {
 	private static final int ROW_HOVER = 0xFF1A1327, ICON = 0xFF272F47, TEXT = 0xFFE8E4F5, DIM = 0xFF6E6A86;
 	private static final int PURPLE = 0xFFBD8BFB, PILL_BG = 0xFF25173D, PILL_LINE = 0xFF9881E4, TRACK = 0xFF2A2140;
 
-	private static final int PW = 380, PH = 204, SIDE_W = 72, HEADER = 66, ROW_H = 30, PILL_W = 44;
+	private static final int PW = 380, SIDE_W = 72, HEADER = 66, ROW_H = 30, PILL_W = 44;
 	private static final String[] TABS = {"Combat", "Movement", "Player", "World"};
 	private static final String[] CATS = {"combat", "movement", "player", "world"};
 	private static final String[] TARGETS = {"mobs", "players", "all"};
 
-	private int tab = 0, px, py, pw;
+	private int tab = 0, px, py, pw, ph = 204, scroll = 0;
 
 	private record Row(String icon, String name, String desc, String pill, boolean on,
 	                   String value, Runnable click, Runnable minus, Runnable plus) {}
@@ -38,6 +38,20 @@ public class MenuScreen extends Screen {
 			case "killaura" -> "Kill Aura";
 			case "nofall" -> "No Fall";
 			case "xray" -> "X-Ray / Block ESP";
+			case "autojump" -> "Auto Jump";
+			case "longjump" -> "Long Jump";
+			case "fastladder" -> "Fast Ladder";
+			case "autowalk" -> "Auto Walk";
+			case "safewalk" -> "Safe Walk";
+			case "antivoid" -> "Anti Void";
+			case "fastfall" -> "Fast Fall";
+			case "highjump" -> "High Jump";
+			case "airjump" -> "Air Jump";
+			case "triggerbot" -> "Trigger Bot";
+			case "autoeat" -> "Auto Eat";
+			case "antiafk" -> "Anti AFK";
+			case "autorespawn" -> "Auto Respawn";
+			case "itemesp" -> "Item ESP";
 			default -> Character.toUpperCase(n.charAt(0)) + n.substring(1);
 		};
 	}
@@ -88,16 +102,18 @@ public class MenuScreen extends Screen {
 	private void calc() {
 		pw = Math.min(PW, this.width - 10);
 		px = (this.width - pw) / 2;
-		py = (this.height - PH) / 2;
+		ph = Math.max(150, Math.min(264, this.height - 20));
+		py = (this.height - ph) / 2;
 	}
+	private int visible() { return Math.max(1, (ph - HEADER - 6) / ROW_H); }
 	private int rx() { return px + SIDE_W + 12; }
 	private int rw() { return pw - SIDE_W - 24; }
-	private int ry(int i) { return py + HEADER + i * ROW_H; }
+	private int ry(int i) { return py + HEADER + (i - scroll) * ROW_H; }
 	private int pillX() { return rx() + rw() - PILL_W - 4; }
 	private int plusX() { return pillX() - 6 - 14; }
 	private int valX() { return plusX() - 34; }
 	private int minusX() { return valX() - 14; }
-	private int tabY(int i) { return i == 4 ? py + PH - 36 : py + 14 + i * 30; }
+	private int tabY(int i) { return i == 4 ? py + ph - 36 : py + 14 + i * 30; }
 
 	private static boolean in(double mx, double my, int x, int y, int w, int h) {
 		return mx >= x && mx < x + w && my >= y && my < y + h;
@@ -112,8 +128,8 @@ public class MenuScreen extends Screen {
 		Minecraft mc = Minecraft.getInstance();
 
 		// Panel + Akzentlinie + Seitenleiste
-		g.fill(px, py, px + pw, py + PH, PANEL);
-		g.fill(px, py, px + SIDE_W, py + PH, SIDE);
+		g.fill(px, py, px + pw, py + ph, PANEL);
+		g.fill(px, py, px + SIDE_W, py + ph, SIDE);
 		g.fill(px, py, px + pw, py + 2, PINK);
 
 		// Tabs
@@ -147,7 +163,14 @@ public class MenuScreen extends Screen {
 
 		// Reihen
 		List<Row> rows = rows();
-		for (int i = 0; i < rows.size(); i++) {
+		scroll = Math.max(0, Math.min(scroll, Math.max(0, rows.size() - visible())));
+		if (rows.size() > visible()) {
+			int trackH = visible() * ROW_H, thumbH = Math.max(12, trackH * visible() / rows.size());
+			int thumbY = py + HEADER + (trackH - thumbH) * scroll / Math.max(1, rows.size() - visible());
+			g.fill(px + pw - 4, py + HEADER, px + pw - 2, py + HEADER + trackH, TRACK);
+			g.fill(px + pw - 4, thumbY, px + pw - 2, thumbY + thumbH, PURPLE);
+		}
+		for (int i = scroll; i < Math.min(rows.size(), scroll + visible()); i++) {
 			Row r = rows.get(i);
 			int y = ry(i);
 			if (in(mx, my, x, y, w, ROW_H - 2)) g.fill(x, y, x + w, y + ROW_H - 2, ROW_HOVER);
@@ -182,10 +205,10 @@ public class MenuScreen extends Screen {
 		if (event.button() != 0) return super.mouseClicked(event, doubleClick);
 		calc();
 		for (int i = 0; i < 5; i++) {
-			if (in(mx, my, px, tabY(i), SIDE_W, 28)) { tab = i; return true; }
+			if (in(mx, my, px, tabY(i), SIDE_W, 28)) { tab = i; scroll = 0; return true; }
 		}
 		List<Row> rows = rows();
-		for (int i = 0; i < rows.size(); i++) {
+		for (int i = scroll; i < Math.min(rows.size(), scroll + visible()); i++) {
 			Row r = rows.get(i);
 			int y = ry(i);
 			if (!in(mx, my, rx(), y, rw(), ROW_H - 2)) continue;
@@ -195,6 +218,13 @@ public class MenuScreen extends Screen {
 			return true;
 		}
 		return super.mouseClicked(event, doubleClick);
+	}
+
+	/** Mausrad scrollt die Modulliste (bewusst ohne @Override: Signatur variiert je Version). */
+	public boolean mouseScrolled(double mx, double my, double scrollX, double scrollY) {
+		int max = Math.max(0, rows().size() - visible());
+		scroll = Math.max(0, Math.min(max, scroll - (int) Math.signum(scrollY)));
+		return true;
 	}
 
 	private void run(Runnable r) {

@@ -109,3 +109,16 @@ kein JDK/Gradle lokal installieren willst - und es gibt dir zum ersten Mal
 eine echte Compiler-Fehlermeldung, falls an den als "ungetestet" markierten
 Stellen (EspRenderer, VelocityMixin, StorageEsp, BaseFinder, Xray-Mixin)
 etwas an die 26.2-Mappings angepasst werden muss.
+
+
+## Update (26.2-Fixes)
+- Tracers, Storage-ESP und Basefinder sind deaktiviert (3D-Render-API in 26.2 geaendert) und tauchen nicht mehr in Menue/Liste auf.
+- ESP laeuft ueber Glow-Outline (durch Waende) und beachtet jetzt `.target`.
+- Neu: glide, highjump, spider, jesus, airjump, bhop (Movement), itemesp (World).
+- Menue: hoehe passt sich an, Mausrad scrollt lange Listen (World/Settings liefen vorher aus dem Panel).
+
+## Update 2: 14 weitere Module + Befehle
+Movement: autojump, longjump, parkour, fastladder, autowalk, safewalk, antivoid, hover, fastfall
+Combat:   triggerbot (schlaegt zu, wenn das Fadenkreuz auf einem Ziel liegt)
+Player:   autoeat (Wert = ab Hunger-Stufe), antiafk, spin, autorespawn
+Befehle:  .panic (alle Module aus), .pos, .wp add|del|goto|list <name>, Singleplayer: .day .night .clear
